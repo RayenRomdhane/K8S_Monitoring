@@ -7,16 +7,22 @@ export async function parseKubeConfig(content: string): Promise<KubeCommandResul
   try {
     // In a real implementation, we would use js-yaml to parse the YAML
     // But for the browser preview, we'll do a simple validation
-    if (!content.includes("apiVersion: v1") || !content.includes("kind: Config")) {
+    // More lenient validation - just check if it contains some common kubeconfig keywords
+    if (
+      content.includes("apiVersion:") ||
+      content.includes("clusters:") ||
+      content.includes("contexts:") ||
+      content.includes("users:")
+    ) {
       return {
-        success: false,
-        error: "Invalid kubeconfig file format. Missing required sections.",
+        success: true,
+        data: { content },
       }
     }
 
     return {
-      success: true,
-      data: { content },
+      success: false,
+      error: "Invalid kubeconfig file format. Missing required sections.",
     }
   } catch (error) {
     console.error("Error parsing kubeconfig:", error)

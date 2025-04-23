@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ThemeProvider } from "@/components/theme-provider"
 import { KubeConfigUpload } from "@/components/kube-config-upload"
 import { ClusterDashboard } from "@/components/cluster-dashboard"
@@ -10,7 +10,7 @@ import { SidebarProvider } from "@/components/ui/sidebar"
 import { Toaster } from "@/components/ui/toaster"
 import { useToast } from "@/hooks/use-toast"
 import type { Cluster, KubeConfig, Namespace, KubeContext } from "@/lib/types"
-import { getKubeContexts, getClusterInfo, getNamespaceDetails } from "@/lib/kube-parser"
+import { getKubeContexts, getClusterInfo, getNamespaceDetails, deleteKubeConfig } from "@/lib/api-client"
 
 export default function Home() {
   const [kubeConfig, setKubeConfig] = useState<KubeConfig | null>(null)
@@ -20,23 +20,27 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
 
-  const handleFileUpload = async (content: string, fileName: string) => {
+  // Clean up kubeconfig file when component unmounts
+  useEffect(() => {
+    return () => {
+      if (kubeConfig?.filePath) {
+        deleteKubeConfig(kubeConfig.filePath).catch(console.error)
+      }
+    }
+  }, [kubeConfig])
+
+  const handleFileUpload = async (filePath: string, fileName: string) => {
     setIsLoading(true)
     try {
       setKubeConfig({
         fileName,
         uploadedAt: new Date().toISOString(),
-        content,
+        filePath,
       })
 
       // Get available contexts from the kubeconfig
-      const contextsResult = await getKubeContexts(content)
-
-      if (!contextsResult.success || !contextsResult.data) {
-        throw new Error(contextsResult.error || "Failed to get contexts from kubeconfig")
-      }
-
-      setContexts(contextsResult.data)
+      const contextsData = await getKubeContexts(filePath)
+      setContexts(contextsData)
       setSelectedCluster(null)
       setSelectedNamespace(null)
 
@@ -52,6 +56,9 @@ export default function Home() {
       })
 
       // Clean up on error
+      if (kubeConfig?.filePath) {
+        deleteKubeConfig(kubeConfig.filePath).catch(console.error)
+      }
       setKubeConfig(null)
     } finally {
       setIsLoading(false)
@@ -59,20 +66,15 @@ export default function Home() {
   }
 
   const handleClusterSelect = async (context: KubeContext) => {
-    if (!kubeConfig?.content) return
+    if (!kubeConfig?.filePath) return
 
     setIsLoading(true)
     setSelectedCluster(null)
     setSelectedNamespace(null)
 
     try {
-      const clusterResult = await getClusterInfo(kubeConfig.content, context.name)
-
-      if (!clusterResult.success || !clusterResult.data) {
-        throw new Error(clusterResult.error || "Failed to get cluster information")
-      }
-
-      setSelectedCluster(clusterResult.data)
+      const clusterData = await getClusterInfo(kubeConfig.filePath, context.name)
+      setSelectedCluster(clusterData)
 
       toast({
         title: "Cluster loaded",
@@ -90,18 +92,14 @@ export default function Home() {
   }
 
   const handleNamespaceSelect = async (namespace: Namespace) => {
-    if (!kubeConfig?.content || !selectedCluster) return
+    if (!kubeConfig?.filePath || !selectedCluster) return
 
     setIsLoading(true)
 
     try {
-      const namespaceResult = await getNamespaceDetails(kubeConfig.content, selectedCluster.context, namespace.name)
+      const namespaceData = await getNamespaceDetails(kubeConfig.filePath, selectedCluster.context, namespace.name)
 
-      if (!namespaceResult.success || !namespaceResult.data) {
-        throw new Error(namespaceResult.error || "Failed to get namespace details")
-      }
-
-      setSelectedNamespace(namespaceResult.data)
+      setSelectedNamespace(namespaceData)
     } catch (error) {
       toast({
         title: "Failed to load namespace details",
@@ -114,33 +112,24 @@ export default function Home() {
   }
 
   const handleRefreshData = async () => {
-    if (!kubeConfig?.content || !selectedCluster) return
+    if (!kubeConfig?.filePath || !selectedCluster) return
 
     setIsLoading(true)
 
     try {
       if (selectedNamespace) {
         // Refresh namespace details
-        const namespaceResult = await getNamespaceDetails(
-          kubeConfig.content,
+        const namespaceData = await getNamespaceDetails(
+          kubeConfig.filePath,
           selectedCluster.context,
           selectedNamespace.name,
         )
 
-        if (!namespaceResult.success || !namespaceResult.data) {
-          throw new Error(namespaceResult.error || "Failed to refresh namespace details")
-        }
-
-        setSelectedNamespace(namespaceResult.data)
+        setSelectedNamespace(namespaceData)
       } else {
         // Refresh cluster info
-        const clusterResult = await getClusterInfo(kubeConfig.content, selectedCluster.context)
-
-        if (!clusterResult.success || !clusterResult.data) {
-          throw new Error(clusterResult.error || "Failed to refresh cluster information")
-        }
-
-        setSelectedCluster(clusterResult.data)
+        const clusterData = await getClusterInfo(kubeConfig.filePath, selectedCluster.context)
+        setSelectedCluster(clusterData)
       }
 
       toast({
