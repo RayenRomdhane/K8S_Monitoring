@@ -1,6 +1,6 @@
 "use client"
 
-import { RefreshCw, Server, ChevronLeft } from "lucide-react"
+import { RefreshCw, Server, ChevronLeft, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -22,6 +22,7 @@ interface ClusterSidebarProps {
   selectedCluster: Cluster | null
   onClusterSelect: (context: KubeContext) => void
   onRefreshData: () => void
+  onChangeKubeConfig: () => void
   isLoading: boolean
 }
 
@@ -30,6 +31,7 @@ export function ClusterSidebar({
   selectedCluster,
   onClusterSelect,
   onRefreshData,
+  onChangeKubeConfig,
   isLoading,
 }: ClusterSidebarProps) {
   const { isMobile } = useSidebar()
@@ -71,6 +73,10 @@ export function ClusterSidebar({
         >
           <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
           Refresh Data
+        </Button>
+        <Button variant="outline" className="w-full justify-start" onClick={onChangeKubeConfig}>
+          <Upload className="mr-2 h-4 w-4" />
+          Change KubeConfig
         </Button>
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="icon">

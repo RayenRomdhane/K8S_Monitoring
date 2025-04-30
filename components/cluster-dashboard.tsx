@@ -28,7 +28,7 @@ export function ClusterDashboard({ cluster, onNamespaceSelect, onRefresh, isLoad
   const totalPods = cluster.namespaces.reduce((acc, namespace) => acc + namespace.podCount, 0)
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold">{cluster.name}</h1>
@@ -92,7 +92,7 @@ export function ClusterDashboard({ cluster, onNamespaceSelect, onRefresh, isLoad
               <Skeleton className="h-8 w-20" />
             ) : (
               <div className="text-2xl font-bold">
-                {cluster.memoryUsage}Mi / {cluster.memoryTotal}Mi
+                {Math.round(cluster.memoryUsage)}Mi / {cluster.memoryTotal}Mi
               </div>
             )}
             <p className="text-xs text-muted-foreground">
@@ -144,7 +144,7 @@ export function ClusterDashboard({ cluster, onNamespaceSelect, onRefresh, isLoad
                   <ResourceUsageChart
                     data={cluster.namespaces.map((ns) => ({
                       name: ns.name,
-                      value: ns.memoryUsage,
+                      value: Math.round(ns.memoryUsage),
                     }))}
                     type="memory"
                   />

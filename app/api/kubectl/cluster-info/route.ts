@@ -4,7 +4,7 @@ import { promisify } from "util"
 
 const execPromise = promisify(exec)
 
-// Helper function to parse node metrics
+// Mise à jour de la fonction parseNodeMetrics pour corriger le calcul de la mémoire
 function parseNodeMetrics(metricsOutput: string): {
   cpuUsage: number
   cpuTotal: number
@@ -28,7 +28,7 @@ function parseNodeMetrics(metricsOutput: string): {
         cpuUsage += Number.parseInt(cpuStr, 10) * 1000 // Convert cores to millicores
       }
 
-      // Parse Memory
+      // Parse Memory - Correction du calcul de la mémoire
       const memStr = parts[2]
       if (memStr.endsWith("Mi")) {
         memoryUsage += Number.parseInt(memStr.slice(0, -2), 10)
@@ -36,6 +36,12 @@ function parseNodeMetrics(metricsOutput: string): {
         memoryUsage += Number.parseInt(memStr.slice(0, -2), 10) * 1024 // Convert Gi to Mi
       } else if (memStr.endsWith("Ki")) {
         memoryUsage += Math.floor(Number.parseInt(memStr.slice(0, -2), 10) / 1024) // Convert Ki to Mi
+      } else if (memStr.endsWith("m")) {
+        // Handle potential 'm' suffix for memory (though unusual)
+        memoryUsage += Number.parseInt(memStr.slice(0, -1), 10) / 1024 / 1024 // Convert bytes to Mi
+      } else {
+        // Assume bytes if no unit
+        memoryUsage += Number.parseInt(memStr, 10) / 1024 / 1024 // Convert bytes to Mi
       }
 
       // Estimate total resources (this is a rough estimate)

@@ -147,6 +147,19 @@ export default function Home() {
     }
   }
 
+  const handleChangeKubeConfig = () => {
+    // Clean up current kubeconfig
+    if (kubeConfig?.filePath) {
+      deleteKubeConfig(kubeConfig.filePath).catch(console.error)
+    }
+
+    // Reset state
+    setKubeConfig(null)
+    setContexts([])
+    setSelectedCluster(null)
+    setSelectedNamespace(null)
+  }
+
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <SidebarProvider>
@@ -158,9 +171,10 @@ export default function Home() {
                 selectedCluster={selectedCluster}
                 onClusterSelect={handleClusterSelect}
                 onRefreshData={handleRefreshData}
+                onChangeKubeConfig={handleChangeKubeConfig}
                 isLoading={isLoading}
               />
-              <main className="flex-1 overflow-auto">
+              <main className="flex-1 overflow-auto mx-auto max-w-7xl">
                 {selectedCluster ? (
                   selectedNamespace ? (
                     <NamespaceDetails

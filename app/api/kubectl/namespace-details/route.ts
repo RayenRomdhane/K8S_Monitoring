@@ -4,7 +4,7 @@ import { promisify } from "util"
 
 const execPromise = promisify(exec)
 
-// Helper function to parse pod metrics
+// Mise à jour de la fonction parsePodMetrics pour corriger le calcul de la mémoire
 function parsePodMetrics(metricsOutput: string): Record<string, { cpu: number; memory: number }> {
   const lines = metricsOutput.trim().split("\n")
   const result: Record<string, { cpu: number; memory: number }> = {}
@@ -23,7 +23,7 @@ function parsePodMetrics(metricsOutput: string): Record<string, { cpu: number; m
         cpu = Number.parseInt(cpuStr, 10) * 1000 // Convert cores to millicores
       }
 
-      // Parse Memory
+      // Parse Memory - Correction du calcul de la mémoire
       let memory = 0
       const memStr = parts[2]
       if (memStr.endsWith("Mi")) {
@@ -32,6 +32,12 @@ function parsePodMetrics(metricsOutput: string): Record<string, { cpu: number; m
         memory = Number.parseInt(memStr.slice(0, -2), 10) * 1024 // Convert Gi to Mi
       } else if (memStr.endsWith("Ki")) {
         memory = Math.floor(Number.parseInt(memStr.slice(0, -2), 10) / 1024) // Convert Ki to Mi
+      } else if (memStr.endsWith("m")) {
+        // Handle potential 'm' suffix for memory (though unusual)
+        memory = Number.parseInt(memStr.slice(0, -1), 10) / 1024 / 1024 // Convert bytes to Mi
+      } else {
+        // Assume bytes if no unit
+        memory = Number.parseInt(memStr, 10) / 1024 / 1024 // Convert bytes to Mi
       }
 
       result[podName] = { cpu, memory }

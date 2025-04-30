@@ -62,7 +62,7 @@ export function NamespaceDetails({ cluster, namespace, onBack, onRefresh, isLoad
     const rows = sortedPods.map((pod) => [
       pod.name,
       pod.cpuUsage.toString(),
-      pod.memoryUsage.toString(),
+      Math.round(pod.memoryUsage).toString(),
       pod.pvcs.join(", "),
       pod.configMaps.join(", "),
       pod.secrets.join(", "),
@@ -84,7 +84,7 @@ export function NamespaceDetails({ cluster, namespace, onBack, onRefresh, isLoad
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={onBack}>
@@ -121,7 +121,7 @@ export function NamespaceDetails({ cluster, namespace, onBack, onRefresh, isLoad
         </div>
       </div>
 
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         {isLoading ? (
           <div className="p-4 space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -160,7 +160,7 @@ export function NamespaceDetails({ cluster, namespace, onBack, onRefresh, isLoad
                   <TableRow key={pod.id}>
                     <TableCell className="font-medium">{pod.name}</TableCell>
                     <TableCell className="text-right">{pod.cpuUsage}</TableCell>
-                    <TableCell className="text-right">{pod.memoryUsage}</TableCell>
+                    <TableCell className="text-right">{Math.round(pod.memoryUsage)}</TableCell>
                     <TableCell>{pod.pvcs.join(", ") || "-"}</TableCell>
                     <TableCell>{pod.configMaps.join(", ") || "-"}</TableCell>
                     <TableCell>{pod.secrets.join(", ") || "-"}</TableCell>
